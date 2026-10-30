@@ -517,8 +517,9 @@ log "building FAT32 boot image"
 BOOT_PART_SIZE="${BOOT_PART_SIZE:-32M}"
 rm -f "$BOOT_IMG"
 truncate -s "$BOOT_PART_SIZE" "$BOOT_IMG"
-mkfs.vfat -F 32 -s 1 -n DSMBOOT "$BOOT_IMG" >/dev/null 2>&1 || mkfs.vfat -F 32 -n DSMBOOT "$BOOT_IMG" >/dev/null
+mkfs.vfat -F 16 -r 512 -n DSMBOOT "$BOOT_IMG"
 MTOOLS_SKIP_CHECK=1 mcopy -i "$BOOT_IMG" -s "$BOOT_ROOT"/* ::/
+MTOOLS_SKIP_CHECK=1 mdir -i "$BOOT_IMG" ::/
 
 log "preparing firmware links"
 mkdir -p "$FIRMWARE_DIR"
