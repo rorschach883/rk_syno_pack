@@ -25,6 +25,10 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Normalize Shell Script Line Endings
+        run: |
+          find . -type f -name "*.sh" -exec sed -i 's/\r$//' {} +
+
       - name: Install Build Dependencies
         run: |
           sudo apt-get update
