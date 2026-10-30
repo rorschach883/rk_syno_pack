@@ -35,6 +35,12 @@ jobs:
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
             libsodium-dev libmsgpack-dev
 
+      - name: Build SynoXtract Tool
+        run: |
+          cd tools/SynoXtract
+          g++ -std=c++17 -O3 main.cpp -lsodium -o synoxtract
+          chmod +x synoxtract
+
       - name: Compile RK3566 Kernel
         run: |
           export SOC=rk3566
@@ -57,10 +63,16 @@ jobs:
           export SYNO_MAC1="${{ github.event.inputs.mac_address }}"
           ./build.sh updateimg
 
+          # 灏嗗畨瑁呭簳鍖呬笌 Update 1 琛ヤ竵鍖呬竴璧锋墦鍖呰繘鍏?Artifacts
+          cp build/DSM_DS124_90080.pat output/dsm/ || true
+          curl -L --fail -o output/dsm/DSM_DS124_90080-Update1.pat \
+            "https://global.synologydownload.com/download/DSM/criticalupdate/update_pack/90080-1/synology_rtd1619b_ds124.pat" || true
+
       - name: Upload Output Firmware
         uses: actions/upload-artifact@v4
         with:
-          name: OECT-DS124-7.4.1-90080
+          name: OECT-DS124-7.4.1-90080-Full-Package
           path: |
             output/dsm/rk3566-dsm-raw_*.img.gz
             output/dsm/rk3566-dsm-raw_*.img
+            output/dsm/DSM_DS124_*.pat
