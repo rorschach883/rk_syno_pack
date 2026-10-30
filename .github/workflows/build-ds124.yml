@@ -63,6 +63,7 @@ jobs:
       - name: Pack OEC-T Raw eMMC Image
         run: |
           export SOC=rk3566
+          export MODEL=DS124
           export SYNO_SN="${{ github.event.inputs.serial_number }}"
           export SYNO_MAC1="${{ github.event.inputs.mac_address }}"
           ./build.sh updateimg
