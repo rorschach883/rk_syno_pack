@@ -326,6 +326,11 @@ extract_pat() {
   mkdir -p "${PAT_EXTRACT_DIR}" "${PAT_RD_DIR}"
 
   msg "extracting pat: ${pat_file}"
+  if [ ! -x "${SYNOXTRACT_BIN}" ] && [ -f "${PROJECT_DIR}/tools/SynoXtract/main.cpp" ]; then
+    msg "compiling SynoXtract binary..."
+    g++ -std=c++17 -O3 "${PROJECT_DIR}/tools/SynoXtract/main.cpp" -lsodium -o "${SYNOXTRACT_BIN}" || true
+    chmod +x "${SYNOXTRACT_BIN}" 2>/dev/null || true
+  fi
   [ -x "${SYNOXTRACT_BIN}" ] || die "missing SynoXtract binary: ${SYNOXTRACT_BIN}"
   if ! "${SYNOXTRACT_BIN}" -i "${pat_file}" -d "${PAT_EXTRACT_DIR}"; then
     msg "SynoXtract returned non-zero, trying fallback pat directory"
