@@ -304,7 +304,7 @@ INITRD_ROOT="${INITRD_ROOT:-$PROJECT_DIR/build/pat-rd-patched}"
 PATCHED_UINITRD="${PATCHED_UINITRD:-$PROJECT_DIR/build/boot-patched/uInitrd}"
 ROOT_MODULE_SRC="${ROOT_MODULE_SRC:-$INITRD_ROOT/usr/lib/modules}"
 SYNO_MAC1="${SYNO_MAC1:-}"
-SYNO_SN="${SYNO_SN:-}"
+SYNO_SN="${SYNO_SN:-23A0SBR124001}"
 SYNO_CUSTOM_SN="${SYNO_CUSTOM_SN:-$SYNO_SN}"
 SYNO_FW_VERSION="${SYNO_FW_VERSION:-M.115}"
 SYNO_BOOT_LOGO="${SYNO_BOOT_LOGO:-$PROJECT_DIR/assets/boot-logo/logo.bmp}"
@@ -411,6 +411,11 @@ if [ "$PACK_ONLY" -eq 0 ]; then
 	configure_kernel_if_needed
 	log "building kernel Image and dtb"
 	make -C "$KERNEL_SRC" O="$KERNEL_BUILD" ARCH=arm64 CROSS_COMPILE="$CROSS_COMPILE" -j"$JOBS" Image Image.gz dtbs
+	if [ "$SOC" = "rk3566" ] && [ -f "$KERNEL_DTB" ]; then
+		log "capping RK3566 max CPU frequency to 1.608 GHz (disabling 1.8GHz opp node to prevent undervoltage panic)"
+		fdtput -t s "$KERNEL_DTB" /opp-table-0/opp-1800000000 status disabled 2>/dev/null || true
+		fdtput -t s "$KERNEL_DTB" /cpu0-opp-table/opp-1800000000 status disabled 2>/dev/null || true
+	fi
 	log "building all kernel modules"
 	make -C "$KERNEL_SRC" O="$KERNEL_BUILD" ARCH=arm64 CROSS_COMPILE="$CROSS_COMPILE" -j"$JOBS" modules
 	prune_stale_kernel_modules
@@ -551,3 +556,4 @@ if [ -n "$RAW_BOOTLOADER_BIN" ] && [ -r "$RAW_BOOTLOADER_BIN" ]; then
 elif [ -n "$RAW_BOOTLOADER_BIN" ]; then
 	log "skip raw disk image: $RAW_BOOTLOADER_BIN is missing"
 fi
+
