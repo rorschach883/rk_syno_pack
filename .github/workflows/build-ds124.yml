@@ -1,0 +1,61 @@
+name: Build DS124 7.4.1 for OEC-T
+
+on:
+  workflow_dispatch:
+    inputs:
+      pat_url:
+        description: 'Synology PAT Download URL'
+        required: true
+        default: 'https://global.synologydownload.com/download/DSM/release/7.4.1/90080/DSM_DS124_90080.pat'
+      serial_number:
+        description: 'Synology Serial Number'
+        required: true
+        default: '23A0SBR124001'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential bc bison flex libssl-dev libelf-dev dwarves \
+            cpio xz-utils patch curl e2fsprogs device-tree-compiler \
+            dosfstools mtools gdisk gzip vim-common \
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+            libsodium-dev libmsgpack-dev
+
+      - name: Compile RK3566 Kernel
+        run: |
+          export SOC=rk3566
+          export CROSS_COMPILE="aarch64-linux-gnu-"
+          export JOBS=$(nproc)
+          ./build.sh kernel
+
+      - name: Download & Patch DS124 PAT
+        run: |
+          export SOC=rk3566
+          export MODEL=DS124
+          export SYNO_MAX_DISKS=1
+          export PAT_URL="${{ github.event.inputs.pat_url }}"
+          ./build.sh pat
+
+      - name: Pack OEC-T Raw eMMC Image
+        run: |
+          export SOC=rk3566
+          export SYNO_SN="${{ github.event.inputs.serial_number }}"
+          ./build.sh updateimg
+
+      - name: Upload Output Firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: OECT-DS124-7.4.1-90080
+          path: |
+            output/dsm/rk3566-dsm-raw_*.img.gz
+            output/dsm/rk3566-dsm-raw_*.img
