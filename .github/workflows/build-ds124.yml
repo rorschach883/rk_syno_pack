@@ -10,7 +10,11 @@ on:
       serial_number:
         description: 'Synology Serial Number'
         required: true
-        default: '23A0SBR124001'
+        default: '183AQEN339808'
+      mac_address:
+        description: 'Device MAC Address (12 Hex chars without colons)'
+        required: true
+        default: '9009D0593283'
 
 jobs:
   build:
@@ -50,6 +54,7 @@ jobs:
         run: |
           export SOC=rk3566
           export SYNO_SN="${{ github.event.inputs.serial_number }}"
+          export SYNO_MAC1="${{ github.event.inputs.mac_address }}"
           ./build.sh updateimg
 
       - name: Upload Output Firmware
