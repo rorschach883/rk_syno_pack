@@ -514,8 +514,9 @@ EOF
 cp -f "$BOOT_ROOT/boot/extlinux/extlinux.conf" "$BOOT_ROOT/extlinux/extlinux.conf"
 
 log "building FAT32 boot image"
+BOOT_PART_SIZE="${BOOT_PART_SIZE:-64M}"
 rm -f "$BOOT_IMG"
-truncate -s 32M "$BOOT_IMG"
+truncate -s "$BOOT_PART_SIZE" "$BOOT_IMG"
 mkfs.vfat -F 32 -n DSMBOOT "$BOOT_IMG" >/dev/null
 MTOOLS_SKIP_CHECK=1 mcopy -i "$BOOT_IMG" -s "$BOOT_ROOT"/* ::/
 
@@ -551,7 +552,7 @@ log "done: $UPDATE_OUT"
 
 if [ -n "$RAW_BOOTLOADER_BIN" ] && [ -r "$RAW_BOOTLOADER_BIN" ]; then
 	log "packing raw disk image"
-	"$RAW_PACK_SCRIPT" "$RAW_BOOTLOADER_BIN" "$BOOT_IMG" "$RAW_UPDATE_OUT" >/dev/null
+	BOOT_PART_SIZE="${BOOT_PART_SIZE:-64M}" RAW_IMAGE_SIZE="${RAW_IMAGE_SIZE:-256M}" "$RAW_PACK_SCRIPT" "$RAW_BOOTLOADER_BIN" "$BOOT_IMG" "$RAW_UPDATE_OUT" >/dev/null
 	log "done: $RAW_UPDATE_OUT"
 elif [ -n "$RAW_BOOTLOADER_BIN" ]; then
 	log "skip raw disk image: $RAW_BOOTLOADER_BIN is missing"
