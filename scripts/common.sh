@@ -1,3 +1,4 @@
+Command output:
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -11,16 +12,19 @@ KERNEL_BUILD_DIR="${KERNEL_BUILD:-${PROJECT_DIR}/build/out/kernel-7.3}"
 SYNO_HDDMON_KO="${SYNO_HDDMON_KO:-${KERNEL_BUILD_DIR}/drivers/hwmon/syno_hddmon.ko}"
 ROOT_MODULE_DEP_LINES=()
 
+MODEL="${MODEL:-DS124}"
+
 pat_url_for() {
+  local model="${MODEL:-DS124}"
   case "${1:-7.4.1}" in
     7.3|7.3.2|86009)
-      printf '%s\n' 'https://global.synologydownload.com/download/DSM/release/7.3.2/86009/DSM_DS423_86009.pat'
+      printf '%s\n' "https://global.synologydownload.com/download/DSM/release/7.3.2/86009/DSM_${model}_86009.pat"
       ;;
     7.4|90075)
-      printf '%s\n' 'https://global.synologydownload.com/download/DSM/release/7.4/90075/DSM_DS423_90075.pat'
+      printf '%s\n' "https://global.synologydownload.com/download/DSM/release/7.4/90075/DSM_${model}_90075.pat"
       ;;
     7.4.1|90080)
-      printf '%s\n' 'https://global.synologydownload.com/download/DSM/release/7.4.1/90080/DSM_DS423_90080.pat'
+      printf '%s\n' "https://global.synologydownload.com/download/DSM/release/7.4.1/90080/DSM_${model}_90080.pat"
       ;;
     http://*|https://*)
       printf '%s\n' "$1"
@@ -197,7 +201,7 @@ read_version_key() {
 }
 
 patch_model_dtb_rk3566_sata_slots() {
-  local max_disks="${SYNO_MAX_DISKS:-6}"
+  local max_disks="${SYNO_MAX_DISKS:-1}"
   local model_dtb slot slot_node ahci_node rtk_ahci_node actual
 
   case "${max_disks}" in
@@ -238,7 +242,7 @@ patch_model_dtb_rk3566_sata_slots() {
 
 patch_model_dtb_sata_pcie_root() {
   local pcie_root="${SYNO_SATA_PCIE_ROOT:-0000:00:00.0,00.0}"
-  local max_disks="${SYNO_MAX_DISKS:-6}"
+  local max_disks="${SYNO_MAX_DISKS:-1}"
   local model_dtb slot slot_node ahci_node actual
 
   [ -n "${pcie_root}" ] || die "SYNO_SATA_PCIE_ROOT must not be empty"
@@ -296,7 +300,7 @@ set_synoinfo_kv() {
 }
 
 patch_synoinfo_disk_count() {
-  local max_disks="${SYNO_MAX_DISKS:-6}"
+  local max_disks="${SYNO_MAX_DISKS:-1}"
   local synoinfo
 
   case "${max_disks}" in
