@@ -312,7 +312,7 @@ SWIOTLB="${SWIOTLB:-32768}"
 COHERENT_POOL="${COHERENT_POOL:-4M}"
 RAW_INITRD="$OUT_DIR/uInitrd.raw"
 LZMA_INITRD="$OUT_DIR/uInitrd.lzma"
-KERNEL_IMAGE="$KERNEL_BUILD/arch/arm64/boot/Image"
+KERNEL_IMAGE="$KERNEL_BUILD/arch/arm64/boot/Image.gz"
 JOBS="${JOBS:-$(nproc)}"
 
 case "$SOC" in
@@ -450,7 +450,7 @@ rm -rf "$BOOT_ROOT"
 mkdir -p "$BOOT_ROOT/boot/extlinux" "$BOOT_ROOT/extlinux"
 install -D -m 0644 "$PATCHED_UINITRD" "$BOOT_ROOT/boot/uInitrd"
 
-install -D -m 0755 "$KERNEL_IMAGE" "$BOOT_ROOT/boot/Image"
+install -D -m 0755 "$KERNEL_IMAGE" "$BOOT_ROOT/boot/Image.gz"
 install -D -m 0644 "$KERNEL_DTB" "$BOOT_ROOT/boot/$DTB_NAME"
 if [ -n "${SYNO_BOOT_LOGO:-}" ]; then
 	install -D -m 0644 "$SYNO_BOOT_LOGO" "$BOOT_ROOT/logo.bmp"
@@ -460,7 +460,7 @@ install_root_modules
 BOOTARGS=(
 	root=/dev/md0
 	netif_num=1
-	syno_hw_version=DS423
+	syno_hw_version="${MODEL:-DS124}"
 	syno_fw_version="$SYNO_FW_VERSION"
 	uio_pdrv_genirq.of_id=generic-uio
 	vender_format_version=2
@@ -503,7 +503,7 @@ fi
 {
 	cat <<EOF
 label $EXTLINUX_LABEL
-  kernel /boot/Image
+  kernel /boot/Image.gz
   initrd /boot/uInitrd
   fdt /boot/$DTB_NAME
 EOF
@@ -514,10 +514,10 @@ EOF
 cp -f "$BOOT_ROOT/boot/extlinux/extlinux.conf" "$BOOT_ROOT/extlinux/extlinux.conf"
 
 log "building FAT32 boot image"
-BOOT_PART_SIZE="${BOOT_PART_SIZE:-64M}"
+BOOT_PART_SIZE="${BOOT_PART_SIZE:-32M}"
 rm -f "$BOOT_IMG"
 truncate -s "$BOOT_PART_SIZE" "$BOOT_IMG"
-mkfs.vfat -F 32 -n DSMBOOT "$BOOT_IMG" >/dev/null
+mkfs.vfat -F 32 -s 1 -n DSMBOOT "$BOOT_IMG" >/dev/null 2>&1 || mkfs.vfat -F 32 -n DSMBOOT "$BOOT_IMG" >/dev/null
 MTOOLS_SKIP_CHECK=1 mcopy -i "$BOOT_IMG" -s "$BOOT_ROOT"/* ::/
 
 log "preparing firmware links"
@@ -552,7 +552,7 @@ log "done: $UPDATE_OUT"
 
 if [ -n "$RAW_BOOTLOADER_BIN" ] && [ -r "$RAW_BOOTLOADER_BIN" ]; then
 	log "packing raw disk image"
-	BOOT_PART_SIZE="${BOOT_PART_SIZE:-64M}" RAW_IMAGE_SIZE="${RAW_IMAGE_SIZE:-256M}" "$RAW_PACK_SCRIPT" "$RAW_BOOTLOADER_BIN" "$BOOT_IMG" "$RAW_UPDATE_OUT" >/dev/null
+	BOOT_PART_SIZE="${BOOT_PART_SIZE:-32M}" RAW_IMAGE_SIZE="${RAW_IMAGE_SIZE:-128M}" "$RAW_PACK_SCRIPT" "$RAW_BOOTLOADER_BIN" "$BOOT_IMG" "$RAW_UPDATE_OUT" >/dev/null
 	log "done: $RAW_UPDATE_OUT"
 elif [ -n "$RAW_BOOTLOADER_BIN" ]; then
 	log "skip raw disk image: $RAW_BOOTLOADER_BIN is missing"
